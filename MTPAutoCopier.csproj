@@ -58,6 +58,7 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
+    <Compile Include="Models\MtpDevice.cs" />
     <Compile Include="ViewModels\MainVm.cs" />
     <Page Include="MainWindow.xaml">
       <Generator>MSBuild:Compile</Generator>
@@ -74,7 +75,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Models\MtpEngine.cs" />
-    <Compile Include="Models\MTPTask.cs" />
+    <Compile Include="Models\MtpTask.cs" />
     <Compile Include="Models\Settings.cs" />
     <Compile Include="Properties\AssemblyInfo.cs">
       <SubType>Code</SubType>

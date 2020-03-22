@@ -8,6 +8,8 @@
         public bool DeleteSourceAfterCopying { get; set; }
         public bool AlreadyProcessed { get; set; }
         public bool IgnoreThisDevice { get; set; }
+        public bool CreateSubfolder { get; set; }
+        public string SubfolderFormat { get; set; } = "dd MM yyyy";
 
     }
 }

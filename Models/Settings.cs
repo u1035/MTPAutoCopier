@@ -10,7 +10,7 @@ namespace MTPAutoCopier.Models
     public class Settings
     {
         public List<MtpTask> Tasks { get; set; } = new List<MtpTask>();
-        public HashSet<MtpDevice> DevicesToWatch { get; set; } = new HashSet<MtpDevice>();
+        public List<MtpDevice> DevicesToWatch { get; set; } = new List<MtpDevice>();
 
 
 

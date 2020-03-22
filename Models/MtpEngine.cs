@@ -1,35 +1,39 @@
 ﻿using System;
 using System.Collections.ObjectModel;
-using System.ComponentModel;
 using System.IO;
 using System.Linq;
-using System.Runtime.CompilerServices;
-using System.Threading;
+using System.Threading.Tasks;
+using System.Windows.Threading;
 using MediaDevices;
-using MTPAutoCopier.Annotations;
+using Prism.Mvvm;
 
 namespace MTPAutoCopier.Models
 {
-    public class MtpEngine : INotifyPropertyChanged
+    public class MtpEngine : BindableBase
     {
-
-        private readonly Settings _config;
-        private Timer _waitForDeviceTimer;
-        private bool _timerWorkingNow;
         private ObservableCollection<MediaDevice> _availableDevices;
+        private ObservableCollection<MtpTask> _tasksForSelectedDevice;
         private MediaDevice _selectedDevice;
+        private Settings _config;
+        private string _log;
+        private Dispatcher _dispatcher;
+
+        public string Log
+        {
+            get => _log;
+            set => SetProperty(ref _log, value);
+        }
+
+        public Settings Config
+        {
+            get => _config;
+            set => SetProperty(ref _config, value);
+        }
 
         public ObservableCollection<MediaDevice> AvailableDevices
         {
             get => _availableDevices;
-            set
-            {
-                if (_availableDevices != value)
-                {
-                    _availableDevices = value;
-                    OnPropertyChanged();
-                }
-            }
+            set => SetProperty(ref _availableDevices, value);
         }
 
         public MediaDevice SelectedDevice
@@ -37,73 +41,84 @@ namespace MTPAutoCopier.Models
             get => _selectedDevice;
             set
             {
-                if (_selectedDevice != value)
-                {
-                    _selectedDevice = value;
-                    OnPropertyChanged();
-                }
+                SetProperty(ref _selectedDevice, value);
+                ShowTasksForSelectedDevice();
             }
+        }
+
+        public ObservableCollection<MtpTask> TasksForSelectedDevice
+        {
+            get => _tasksForSelectedDevice;
+            set => SetProperty(ref _tasksForSelectedDevice, value);
         }
 
         public MtpEngine()
         {
+            _dispatcher = Dispatcher.CurrentDispatcher;
             _config = Settings.LoadConfig();
-            _waitForDeviceTimer = new Timer(OnWaitForDeviceTimerTick, null, 0, 10000);
             AvailableDevices = new ObservableCollection<MediaDevice>(MediaDevice.GetDevices().ToList());
         }
 
-        public void Test()
+        private void ShowTasksForSelectedDevice()
         {
             if (SelectedDevice != null)
             {
-                var dev = new MtpDevice
-                {
-                    DeviceName = SelectedDevice.Description,
-                    DeviceManufacturer = SelectedDevice.Manufacturer,
-                    DeviceId = SelectedDevice.DeviceId
-                };
-                var tsk = new MtpTask
-                {
-                    SourceDevice = dev, SourcePath = "Внутр. накопитель\\DCIM\\Camera",
-                    DestinationPath = "C:\\cam1_records"
-                };
-                _config.Tasks.Add(tsk);
-                _config.DevicesToWatch.Add(dev);
-                _config.SaveConfig();
+                TasksForSelectedDevice = new ObservableCollection<MtpTask>(Config.Tasks.Where(o =>
+                    o.SourceDevice.DeviceName == SelectedDevice.Description &&
+                    o.SourceDevice.DeviceManufacturer == SelectedDevice.Manufacturer &&
+                    o.SourceDevice.DeviceId == SelectedDevice.DeviceId).ToArray());
+            }
+            else
+            {
+                TasksForSelectedDevice = new ObservableCollection<MtpTask>();
             }
         }
 
-        private void OnWaitForDeviceTimerTick(object state)
+        public void ProcessTask()
         {
-            if (_timerWorkingNow)
-                return;
-
-            _timerWorkingNow = true;
             CheckForConnectedDevices();
-            _timerWorkingNow = false;
+            //if (SelectedDevice != null)
+            //{
+            //    var dev = new MtpDevice
+            //    {
+            //        DeviceName = SelectedDevice.Description,
+            //        DeviceManufacturer = SelectedDevice.Manufacturer,
+            //        DeviceId = SelectedDevice.DeviceId
+            //    };
+            //    var tsk = new MtpTask
+            //    {
+            //        SourceDevice = dev,
+            //        SourcePath = "Съемное хранилище\\DCIM\\100NIKON",
+            //        DestinationPath = "C:\\cam1_records"
+            //    };
+            //    _config.Tasks.Add(tsk);
+            //    _config.DevicesToWatch.Add(dev);
+            //    _config.SaveConfig();
+            //}
+        }
+
+        public void RefreshDevicesList()
+        {
+            AvailableDevices = new ObservableCollection<MediaDevice>(MediaDevice.GetDevices().ToList());
         }
 
         private void CheckForConnectedDevices()
         {
-            AvailableDevices = new ObservableCollection<MediaDevice>(MediaDevice.GetDevices().ToList());
-
-            foreach (var device in AvailableDevices)
+            if (Config.DevicesToWatch.Any(o => o.DeviceName == SelectedDevice.Description &&
+                                               o.DeviceManufacturer == SelectedDevice.Manufacturer &&
+                                               o.DeviceId == SelectedDevice.DeviceId))
             {
-                var connectedDevice = new MtpDevice
-                {
-                    DeviceName = device.Description,
-                    DeviceManufacturer = device.Manufacturer,
-                    DeviceId = device.DeviceId
-                };
-
-                if (_config.DevicesToWatch.Contains(connectedDevice))
-                    ProcessTasks(device);
+                var tsk = new Task(() => { ProcessTasks(SelectedDevice); });
+                tsk.Start();
             }
         }
 
         private void ProcessTasks(MediaDevice device)
         {
-            var tasksForThisDevice = _config.Tasks.Where(d => d.SourceDevice.Equals(device)).ToArray().ToArray();
+            Log = "";
+            var tasksForThisDevice = Config.Tasks.Where(o => o.SourceDevice.DeviceName == device.Description &&
+                                                            o.SourceDevice.DeviceManufacturer == device.Manufacturer &&
+                                                            o.SourceDevice.DeviceId == device.DeviceId).ToArray();
             if (!tasksForThisDevice.Any())
                 return;
 
@@ -116,7 +131,16 @@ namespace MTPAutoCopier.Models
                     var files = sourceDirInfo.EnumerateFiles("*.*", SearchOption.AllDirectories);
                     foreach (var file in files)
                     {
-                        CopyFile(device, file, task.DestinationPath);
+                        if (task.CreateSubfolder)
+                        {
+                            Directory.CreateDirectory(task.DestinationPath + "\\" + DateTime.Now.ToString(task.SubfolderFormat));
+                            CopyFile(device, file, task.DestinationPath + "\\" + DateTime.Now.ToString(task.SubfolderFormat));
+                        }
+                        else
+                        {
+                            CopyFile(device, file, task.DestinationPath);
+                        }
+
                         if (task.DeleteSourceAfterCopying)
                         {
                             //delete file on MTP device
@@ -125,17 +149,18 @@ namespace MTPAutoCopier.Models
                     device.Disconnect();
                 }
             }
-            catch (Exception e)
+            catch (DirectoryNotFoundException)
             {
-                Console.WriteLine(e);
-                throw;
+
             }
 
         }
 
         private void CopyFile(MediaDevice device, MediaFileInfo file, string destinationDir)
         {
-            MemoryStream memoryStream = new System.IO.MemoryStream();
+            _dispatcher.Invoke(() => { Log += $"Processing file {file.FullName}{Environment.NewLine}"; }, DispatcherPriority.DataBind);
+
+            MemoryStream memoryStream = new MemoryStream();
             device.DownloadFile(file.FullName, memoryStream);
             memoryStream.Position = 0;
             WriteStreamToDisk($"{destinationDir}\\{file.Name}", memoryStream);
@@ -143,7 +168,7 @@ namespace MTPAutoCopier.Models
 
         private void WriteStreamToDisk(string filePath, MemoryStream memoryStream)
         {
-            using (FileStream file = new FileStream(filePath, FileMode.Create, System.IO.FileAccess.Write))
+            using (FileStream file = new FileStream(filePath, FileMode.Create, FileAccess.Write))
             {
                 byte[] bytes = new byte[memoryStream.Length];
                 memoryStream.Read(bytes, 0, (int)memoryStream.Length);
@@ -154,12 +179,12 @@ namespace MTPAutoCopier.Models
 
 
 
-        public event PropertyChangedEventHandler PropertyChanged;
+        //public event PropertyChangedEventHandler PropertyChanged;
 
-        [NotifyPropertyChangedInvocator]
-        protected virtual void OnPropertyChanged([CallerMemberName] string propertyName = null)
-        {
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
-        }
+        //[NotifyPropertyChangedInvocator]
+        //protected virtual void OnPropertyChanged([CallerMemberName] string propertyName = null)
+        //{
+        //    PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+        //}
     }
 }

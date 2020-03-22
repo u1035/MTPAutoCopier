@@ -5,18 +5,48 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:mtpAutoCopier="clr-namespace:MTPAutoCopier.ViewModels"
         mc:Ignorable="d"
-        Title="MainWindow" Height="450" Width="800">
+        Title="MainWindow" Height="600" Width="800">
     <Window.DataContext>
         <mtpAutoCopier:MainVm/>
     </Window.DataContext>
     <Grid>
-        <DataGrid Margin="10" MaxHeight="300" VerticalAlignment="Top" ItemsSource="{Binding AvailableMediaDevices}" SelectedItem="{Binding SelectedDevice, Mode=TwoWay}" AutoGenerateColumns="False">
-            <DataGrid.Columns>
-                <DataGridTextColumn Header="Manufacturer" Binding="{Binding Manufacturer}"></DataGridTextColumn>
-                <DataGridTextColumn Header="Description" Binding="{Binding Description}"></DataGridTextColumn>
-                <DataGridTextColumn Header="Device ID" Binding="{Binding DeviceId}"></DataGridTextColumn>
-            </DataGrid.Columns>
-        </DataGrid>
-        <Button Margin="10" MaxHeight="50" VerticalAlignment="Bottom" Command="{Binding TestCommand}">Button</Button>
+        <Grid.RowDefinitions>
+            <RowDefinition></RowDefinition>
+            <RowDefinition></RowDefinition>
+            <RowDefinition></RowDefinition>
+            <RowDefinition></RowDefinition>
+        </Grid.RowDefinitions>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition></ColumnDefinition>
+            <ColumnDefinition></ColumnDefinition>
+        </Grid.ColumnDefinitions>
+        <GroupBox Margin="5" Grid.Column="0" Grid.Row="0" Grid.ColumnSpan="2" Header="Detected MTP devices">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition></RowDefinition>
+                    <RowDefinition></RowDefinition>
+                </Grid.RowDefinitions>
+                <DataGrid  Margin="5" VerticalAlignment="Top" ItemsSource="{Binding Engine.AvailableDevices}" SelectedItem="{Binding SelectedDevice, Mode=TwoWay}" AutoGenerateColumns="False">
+                    <DataGrid.Columns>
+                        <DataGridTextColumn Width="Auto" Header="Manufacturer" Binding="{Binding Manufacturer}"></DataGridTextColumn>
+                        <DataGridTextColumn Width="Auto" Header="Description" Binding="{Binding Description}"></DataGridTextColumn>
+                        <DataGridTextColumn Width="Auto" Header="Device ID" Binding="{Binding DeviceId}"></DataGridTextColumn>
+                    </DataGrid.Columns>
+                </DataGrid>
+                <Button Grid.Column="0" Grid.Row="1"  Margin="10" MaxHeight="50" VerticalAlignment="Bottom" Command="{Binding RefreshDevicesList}">Refresh</Button>
+            </Grid>
+        </GroupBox>
+        <GroupBox Margin="5" Grid.Column="0" Grid.Row="1" Grid.ColumnSpan="2" Header="Tasks">
+            <DataGrid  Margin="5" MaxHeight="300" VerticalAlignment="Top" ItemsSource="{Binding Engine.TasksForSelectedDevice}" SelectedItem="{Binding SelectedDevice, Mode=TwoWay}" AutoGenerateColumns="False">
+                <DataGrid.Columns>
+                    <DataGridTextColumn Width="Auto" Header="Manufacturer" Binding="{Binding SourceDevice.DeviceManufacturer}"></DataGridTextColumn>
+                    <DataGridTextColumn Width="Auto" Header="Description" Binding="{Binding SourceDevice.DeviceName}"></DataGridTextColumn>
+                    <DataGridTextColumn Width="Auto" Header="Source path" Binding="{Binding SourcePath}"></DataGridTextColumn>
+                    <DataGridTextColumn Width="Auto" Header="Dest path" Binding="{Binding DestinationPath}"></DataGridTextColumn>
+                </DataGrid.Columns>
+            </DataGrid>
+        </GroupBox>
+        <TextBlock Grid.Column="0" Grid.Row="2" Grid.ColumnSpan="2"  Margin="10" Text="{Binding Engine.Log}"></TextBlock>
+        <Button Grid.Column="0" Grid.Row="3" Grid.ColumnSpan="2"  Margin="10" MaxHeight="50" VerticalAlignment="Bottom" Command="{Binding ProcessTask}">Process Task</Button>
     </Grid>
 </Window>

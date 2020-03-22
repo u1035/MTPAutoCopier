@@ -1,18 +1,12 @@
-﻿using System.Collections.ObjectModel;
-using System.ComponentModel;
-using System.Runtime.CompilerServices;
-using MediaDevices;
-using MTPAutoCopier.Annotations;
+﻿using MediaDevices;
 using MTPAutoCopier.Models;
 using Prism.Commands;
 
 namespace MTPAutoCopier.ViewModels
 {
-    public class MainVm : INotifyPropertyChanged
+    public class MainVm
     {
         public MtpEngine Engine { get; set; }
-
-        public ObservableCollection<MediaDevice> AvailableMediaDevices => Engine.AvailableDevices;
 
         public MediaDevice SelectedDevice
         {
@@ -20,24 +14,16 @@ namespace MTPAutoCopier.ViewModels
             set => Engine.SelectedDevice = value;
         }
 
-        public DelegateCommand TestCommand { get; private set; }
+        public DelegateCommand ProcessTask { get; private set; }
+        public DelegateCommand RefreshDevicesList { get; private set; }
 
         public MainVm()
         {
             Engine = new MtpEngine();
-            TestCommand = new DelegateCommand(Engine.Test);
+            ProcessTask = new DelegateCommand(Engine.ProcessTask);
+            RefreshDevicesList = new DelegateCommand(Engine.RefreshDevicesList);
         }
 
 
-
-
-
-        public event PropertyChangedEventHandler PropertyChanged;
-
-        [NotifyPropertyChangedInvocator]
-        protected virtual void OnPropertyChanged([CallerMemberName] string propertyName = null)
-        {
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
-        }
     }
 }

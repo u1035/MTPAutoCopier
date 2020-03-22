@@ -128,7 +128,8 @@ namespace MTPAutoCopier.Models
                 {
                     device.Connect();
                     var sourceDirInfo = device.GetDirectoryInfo(task.SourcePath);
-                    var files = sourceDirInfo.EnumerateFiles("*.*", SearchOption.AllDirectories);
+                    var files = sourceDirInfo.EnumerateFiles("*.*");
+                    int i=0;
                     foreach (var file in files)
                     {
                         if (task.CreateSubfolder)
@@ -138,13 +139,18 @@ namespace MTPAutoCopier.Models
                         }
                         else
                         {
+                            if (!Directory.Exists(task.DestinationPath))
+                                Directory.CreateDirectory(task.DestinationPath);
                             CopyFile(device, file, task.DestinationPath);
                         }
 
                         if (task.DeleteSourceAfterCopying)
                         {
-                            //delete file on MTP device
+                            device.DeleteFile(file.FullName);
                         }
+
+                        i++;
+                        _dispatcher.Invoke(() => { Log = $"Processed {i} files. Last processed file - {file.FullName}"; }, DispatcherPriority.DataBind);
                     }
                     device.Disconnect();
                 }
@@ -153,13 +159,11 @@ namespace MTPAutoCopier.Models
             {
 
             }
-
+            _dispatcher.Invoke(() => { Log = "All task completed"; }, DispatcherPriority.DataBind);
         }
 
         private void CopyFile(MediaDevice device, MediaFileInfo file, string destinationDir)
         {
-            _dispatcher.Invoke(() => { Log += $"Processing file {file.FullName}{Environment.NewLine}"; }, DispatcherPriority.DataBind);
-
             MemoryStream memoryStream = new MemoryStream();
             device.DownloadFile(file.FullName, memoryStream);
             memoryStream.Position = 0;

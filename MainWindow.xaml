@@ -5,16 +5,17 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:mtpAutoCopier="clr-namespace:MTPAutoCopier.ViewModels"
         mc:Ignorable="d"
-        Title="MainWindow" Height="600" Width="800">
+        Title="MTPAutoCopier - early alpha" Height="700" Width="800">
     <Window.DataContext>
         <mtpAutoCopier:MainVm/>
     </Window.DataContext>
+
     <Grid>
         <Grid.RowDefinitions>
-            <RowDefinition></RowDefinition>
-            <RowDefinition></RowDefinition>
-            <RowDefinition></RowDefinition>
-            <RowDefinition></RowDefinition>
+            <RowDefinition Height="2*"></RowDefinition>
+            <RowDefinition Height="2*"></RowDefinition>
+            <RowDefinition Height="*"></RowDefinition>
+            <RowDefinition Height="*"></RowDefinition>
         </Grid.RowDefinitions>
         <Grid.ColumnDefinitions>
             <ColumnDefinition></ColumnDefinition>
@@ -23,21 +24,26 @@
         <GroupBox Margin="5" Grid.Column="0" Grid.Row="0" Grid.ColumnSpan="2" Header="Detected MTP devices">
             <Grid>
                 <Grid.RowDefinitions>
-                    <RowDefinition></RowDefinition>
-                    <RowDefinition></RowDefinition>
+                    <RowDefinition Height="2*"></RowDefinition>
+                    <RowDefinition Height="*"></RowDefinition>
                 </Grid.RowDefinitions>
-                <DataGrid  Margin="5" VerticalAlignment="Top" ItemsSource="{Binding Engine.AvailableDevices}" SelectedItem="{Binding SelectedDevice, Mode=TwoWay}" AutoGenerateColumns="False">
+                <DataGrid Grid.Row="0" Margin="5" VerticalScrollBarVisibility="Visible" ItemsSource="{Binding Engine.AvailableDevices}" SelectedItem="{Binding SelectedDevice, Mode=TwoWay}" AutoGenerateColumns="False">
                     <DataGrid.Columns>
                         <DataGridTextColumn Width="Auto" Header="Manufacturer" Binding="{Binding Manufacturer}"></DataGridTextColumn>
                         <DataGridTextColumn Width="Auto" Header="Description" Binding="{Binding Description}"></DataGridTextColumn>
                         <DataGridTextColumn Width="Auto" Header="Device ID" Binding="{Binding DeviceId}"></DataGridTextColumn>
                     </DataGrid.Columns>
                 </DataGrid>
-                <Button Grid.Column="0" Grid.Row="1"  Margin="10" MaxHeight="50" VerticalAlignment="Bottom" Command="{Binding RefreshDevicesList}">Refresh</Button>
+                <Button Grid.Row="1" Margin="5" MinHeight="50" VerticalAlignment="Bottom" HorizontalAlignment="Right" Command="{Binding RefreshDevicesList}">
+                    <StackPanel Orientation="Horizontal">
+                        <Image HorizontalAlignment="Left" Margin="4" Source="Icons/002-refresh.png" Height="36" Width="36" />
+                        <TextBlock Margin="4"  HorizontalAlignment="Center" VerticalAlignment="Center">Refresh devices list</TextBlock>
+                    </StackPanel>
+                </Button>
             </Grid>
         </GroupBox>
         <GroupBox Margin="5" Grid.Column="0" Grid.Row="1" Grid.ColumnSpan="2" Header="Tasks">
-            <DataGrid  Margin="5" MaxHeight="300" VerticalAlignment="Top" ItemsSource="{Binding Engine.TasksForSelectedDevice}" SelectedItem="{Binding SelectedDevice, Mode=TwoWay}" AutoGenerateColumns="False">
+            <DataGrid IsReadOnly="True" Margin="5" VerticalScrollBarVisibility="Visible" ItemsSource="{Binding Engine.TasksForSelectedDevice}" SelectedItem="{Binding SelectedDevice, Mode=TwoWay}" AutoGenerateColumns="False">
                 <DataGrid.Columns>
                     <DataGridTextColumn Width="Auto" Header="Manufacturer" Binding="{Binding SourceDevice.DeviceManufacturer}"></DataGridTextColumn>
                     <DataGridTextColumn Width="Auto" Header="Description" Binding="{Binding SourceDevice.DeviceName}"></DataGridTextColumn>
@@ -46,7 +52,12 @@
                 </DataGrid.Columns>
             </DataGrid>
         </GroupBox>
-        <TextBlock Grid.Column="0" Grid.Row="2" Grid.ColumnSpan="2"  Margin="10" Text="{Binding Engine.Log}"></TextBlock>
-        <Button Grid.Column="0" Grid.Row="3" Grid.ColumnSpan="2"  Margin="10" MaxHeight="50" VerticalAlignment="Bottom" Command="{Binding ProcessTask}">Process Task</Button>
+        <TextBox Grid.Column="0" Grid.Row="2" Grid.ColumnSpan="2" VerticalScrollBarVisibility="Visible" Margin="10" Text="{Binding Engine.Log}"></TextBox>
+        <Button Grid.Column="0" Grid.Row="3" Grid.ColumnSpan="2"  Margin="10" Height="60" VerticalAlignment="Bottom" Command="{Binding ProcessTask}">
+            <StackPanel Orientation="Horizontal">
+                <Image HorizontalAlignment="Left" Margin="4" Source="Icons/001-play-button.png" Height="36" Width="36" />
+                <TextBlock Margin="4"  HorizontalAlignment="Center" VerticalAlignment="Center">Process tasks</TextBlock>
+            </StackPanel>
+        </Button>
     </Grid>
 </Window>

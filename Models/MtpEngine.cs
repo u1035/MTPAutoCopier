@@ -1,23 +1,76 @@
 ﻿using System;
+using System.Collections.ObjectModel;
+using System.ComponentModel;
 using System.IO;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Threading;
 using MediaDevices;
+using MTPAutoCopier.Annotations;
 
 namespace MTPAutoCopier.Models
 {
-    public class MtpEngine
+    public class MtpEngine : INotifyPropertyChanged
     {
 
         private readonly Settings _config;
         private Timer _waitForDeviceTimer;
         private bool _timerWorkingNow;
+        private ObservableCollection<MediaDevice> _availableDevices;
+        private MediaDevice _selectedDevice;
+
+        public ObservableCollection<MediaDevice> AvailableDevices
+        {
+            get => _availableDevices;
+            set
+            {
+                if (_availableDevices != value)
+                {
+                    _availableDevices = value;
+                    OnPropertyChanged();
+                }
+            }
+        }
+
+        public MediaDevice SelectedDevice
+        {
+            get => _selectedDevice;
+            set
+            {
+                if (_selectedDevice != value)
+                {
+                    _selectedDevice = value;
+                    OnPropertyChanged();
+                }
+            }
+        }
 
         public MtpEngine()
         {
             _config = Settings.LoadConfig();
             _waitForDeviceTimer = new Timer(OnWaitForDeviceTimerTick, null, 0, 10000);
+            AvailableDevices = new ObservableCollection<MediaDevice>(MediaDevice.GetDevices().ToList());
+        }
 
+        public void Test()
+        {
+            if (SelectedDevice != null)
+            {
+                var dev = new MtpDevice
+                {
+                    DeviceName = SelectedDevice.Description,
+                    DeviceManufacturer = SelectedDevice.Manufacturer,
+                    DeviceId = SelectedDevice.DeviceId
+                };
+                var tsk = new MtpTask
+                {
+                    SourceDevice = dev, SourcePath = "Внутр. накопитель\\DCIM\\Camera",
+                    DestinationPath = "C:\\cam1_records"
+                };
+                _config.Tasks.Add(tsk);
+                _config.DevicesToWatch.Add(dev);
+                _config.SaveConfig();
+            }
         }
 
         private void OnWaitForDeviceTimerTick(object state)
@@ -32,13 +85,13 @@ namespace MTPAutoCopier.Models
 
         private void CheckForConnectedDevices()
         {
-            var devices = MediaDevice.GetDevices();
+            AvailableDevices = new ObservableCollection<MediaDevice>(MediaDevice.GetDevices().ToList());
 
-            foreach (var device in devices)
+            foreach (var device in AvailableDevices)
             {
                 var connectedDevice = new MtpDevice
                 {
-                    DeviceName = device.Model,
+                    DeviceName = device.Description,
                     DeviceManufacturer = device.Manufacturer,
                     DeviceId = device.DeviceId
                 };
@@ -50,7 +103,7 @@ namespace MTPAutoCopier.Models
 
         private void ProcessTasks(MediaDevice device)
         {
-            var tasksForThisDevice = _config.Tasks.Where(d => d.SourceDevice.Equals(device));
+            var tasksForThisDevice = _config.Tasks.Where(d => d.SourceDevice.Equals(device)).ToArray().ToArray();
             if (!tasksForThisDevice.Any())
                 return;
 
@@ -64,6 +117,10 @@ namespace MTPAutoCopier.Models
                     foreach (var file in files)
                     {
                         CopyFile(device, file, task.DestinationPath);
+                        if (task.DeleteSourceAfterCopying)
+                        {
+                            //delete file on MTP device
+                        }
                     }
                     device.Disconnect();
                 }
@@ -93,6 +150,16 @@ namespace MTPAutoCopier.Models
                 file.Write(bytes, 0, bytes.Length);
                 memoryStream.Close();
             }
+        }
+
+
+
+        public event PropertyChangedEventHandler PropertyChanged;
+
+        [NotifyPropertyChangedInvocator]
+        protected virtual void OnPropertyChanged([CallerMemberName] string propertyName = null)
+        {
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
     }
 }

@@ -1,48 +1,43 @@
-﻿using System.IO;
-using System.Linq;
+﻿using System.Collections.ObjectModel;
+using System.ComponentModel;
+using System.Runtime.CompilerServices;
 using MediaDevices;
+using MTPAutoCopier.Annotations;
 using MTPAutoCopier.Models;
+using Prism.Commands;
 
 namespace MTPAutoCopier.ViewModels
 {
-    public class MainVm
+    public class MainVm : INotifyPropertyChanged
     {
-        public MtpEngine Engine;
+        public MtpEngine Engine { get; set; }
+
+        public ObservableCollection<MediaDevice> AvailableMediaDevices => Engine.AvailableDevices;
+
+        public MediaDevice SelectedDevice
+        {
+            get => Engine.SelectedDevice;
+            set => Engine.SelectedDevice = value;
+        }
+
+        public DelegateCommand TestCommand { get; private set; }
+
         public MainVm()
         {
-            Engine=new MtpEngine();
-
-            //var devices = MediaDevice.GetDevices();
-            //foreach (var dev in devices.Where(d=>d.Manufacturer!="Generic-"))
-            //{
-            //    var tmp = new MtpTask
-            //    {
-            //        SourceDeviceName = dev.Description,
-            //        SourceDeviceId=dev.DeviceId, 
-            //        SourceDeviceManufacturer = dev.Manufacturer,
-            //        SourcePath= "Внутр. накопитель\\DCIM\\Camera",
-            //        DestinationPath = ""
-            //    };
-            //    dev.Connect();
+            Engine = new MtpEngine();
+            TestCommand = new DelegateCommand(Engine.Test);
+        }
 
 
-            //    //var entries = dev.EnumerateFileSystemEntries("\\");
-            //    var photoDir = dev.GetDirectoryInfo(@"Внутр. накопитель\\DCIM\\Camera");
-
-            //    var files = photoDir.EnumerateFiles("*.*", SearchOption.AllDirectories);
-
-            //    //foreach (var file in files)
-            //    //{
-            //    //    MemoryStream memoryStream = new System.IO.MemoryStream();
-            //    //    device.DownloadFile(file.FullName, memoryStream);
-            //    //    memoryStream.Position = 0;
-            //    //    WriteSreamToDisk($@"D:\PHOTOS\{file.Name}", memoryStream);
-            //    //}
-            //    dev.Disconnect();
-
-            //}
 
 
+
+        public event PropertyChangedEventHandler PropertyChanged;
+
+        [NotifyPropertyChangedInvocator]
+        protected virtual void OnPropertyChanged([CallerMemberName] string propertyName = null)
+        {
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
     }
 }

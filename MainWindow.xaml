@@ -27,12 +27,17 @@
                     <RowDefinition Height="2*"></RowDefinition>
                     <RowDefinition Height="*"></RowDefinition>
                 </Grid.RowDefinitions>
-                <DataGrid Grid.Row="0" Margin="5" VerticalScrollBarVisibility="Visible" ItemsSource="{Binding Engine.AvailableDevices}" SelectedItem="{Binding SelectedDevice, Mode=TwoWay}" AutoGenerateColumns="False">
+                <DataGrid IsReadOnly="True" Grid.Row="0" Margin="5" VerticalScrollBarVisibility="Visible" ItemsSource="{Binding Engine.AvailableDevices}" SelectedItem="{Binding SelectedDevice, Mode=TwoWay}" AutoGenerateColumns="False">
                     <DataGrid.Columns>
                         <DataGridTextColumn Width="Auto" Header="Manufacturer" Binding="{Binding Manufacturer}"></DataGridTextColumn>
                         <DataGridTextColumn Width="Auto" Header="Description" Binding="{Binding Description}"></DataGridTextColumn>
                         <DataGridTextColumn Width="Auto" Header="Device ID" Binding="{Binding DeviceId}"></DataGridTextColumn>
                     </DataGrid.Columns>
+                    <DataGrid.ContextMenu>
+                        <ContextMenu>
+                            <MenuItem Header="Copy" Command="Copy" />
+                        </ContextMenu>
+                    </DataGrid.ContextMenu>
                 </DataGrid>
                 <Button Grid.Row="1" Margin="5" MinHeight="50" VerticalAlignment="Bottom" HorizontalAlignment="Right" Command="{Binding RefreshDevicesList}">
                     <StackPanel Orientation="Horizontal">

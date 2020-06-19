@@ -1,6 +1,6 @@
 ﻿using MediaDevices;
 using MTPAutoCopier.Models;
-using Prism.Commands;
+using MTPAutoCopier.MVVM;
 
 namespace MTPAutoCopier.ViewModels
 {
@@ -14,14 +14,14 @@ namespace MTPAutoCopier.ViewModels
             set => Engine.SelectedDevice = value;
         }
 
-        public DelegateCommand ProcessTask { get; private set; }
-        public DelegateCommand RefreshDevicesList { get; private set; }
+        public Command ProcessTask { get; private set; }
+        public Command RefreshDevicesList { get; private set; }
 
         public MainVm()
         {
             Engine = new MtpEngine();
-            ProcessTask = new DelegateCommand(Engine.ProcessTask);
-            RefreshDevicesList = new DelegateCommand(Engine.RefreshDevicesList);
+            ProcessTask = new Command(Engine.ProcessTask);
+            RefreshDevicesList = new Command(Engine.RefreshDevicesList);
         }
 
 

@@ -5,11 +5,11 @@ using System.Linq;
 using System.Threading.Tasks;
 using System.Windows.Threading;
 using MediaDevices;
-using Prism.Mvvm;
+using MTPAutoCopier.MVVM;
 
 namespace MTPAutoCopier.Models
 {
-    public class MtpEngine : BindableBase
+    public class MtpEngine : NotificationObject
     {
         private ObservableCollection<MediaDevice> _availableDevices;
         private ObservableCollection<MtpTask> _tasksForSelectedDevice;

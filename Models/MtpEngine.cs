@@ -16,7 +16,7 @@ namespace MTPAutoCopier.Models
         private MediaDevice _selectedDevice;
         private Settings _config;
         private string _log;
-        private Dispatcher _dispatcher;
+        private readonly Dispatcher _dispatcher;
 
         public string Log
         {
@@ -129,7 +129,7 @@ namespace MTPAutoCopier.Models
                     device.Connect();
                     var sourceDirInfo = device.GetDirectoryInfo(task.SourcePath);
                     var files = sourceDirInfo.EnumerateFiles("*.*");
-                    int i=0;
+                    int i = 0;
                     foreach (var file in files)
                     {
                         if (task.CreateSubfolder)
@@ -164,10 +164,18 @@ namespace MTPAutoCopier.Models
 
         private void CopyFile(MediaDevice device, MediaFileInfo file, string destinationDir)
         {
-            MemoryStream memoryStream = new MemoryStream();
-            device.DownloadFile(file.FullName, memoryStream);
-            memoryStream.Position = 0;
-            WriteStreamToDisk($"{destinationDir}\\{file.Name}", memoryStream);
+            var destinationFile = $"{destinationDir}\\{file.Name}";
+            if (!File.Exists(destinationFile))
+            {
+                MemoryStream memoryStream = new MemoryStream();
+                device.DownloadFile(file.FullName, memoryStream);
+                memoryStream.Position = 0;
+                WriteStreamToDisk(destinationFile, memoryStream);
+            }
+            else
+            {
+                _dispatcher.Invoke(() => { Log = $"File {file.Name} already exists in destination directory"; }, DispatcherPriority.DataBind);
+            }
         }
 
         private void WriteStreamToDisk(string filePath, MemoryStream memoryStream)
@@ -180,15 +188,5 @@ namespace MTPAutoCopier.Models
                 memoryStream.Close();
             }
         }
-
-
-
-        //public event PropertyChangedEventHandler PropertyChanged;
-
-        //[NotifyPropertyChangedInvocator]
-        //protected virtual void OnPropertyChanged([CallerMemberName] string propertyName = null)
-        //{
-        //    PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
-        //}
     }
 }

@@ -14,8 +14,8 @@ namespace MTPAutoCopier.ViewModels
             set => Engine.SelectedDevice = value;
         }
 
-        public Command ProcessTask { get; private set; }
-        public Command RefreshDevicesList { get; private set; }
+        public Command ProcessTask { get; }
+        public Command RefreshDevicesList { get; }
 
         public MainVm()
         {

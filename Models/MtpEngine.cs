@@ -6,13 +6,12 @@ using System.Threading.Tasks;
 using System.Windows.Threading;
 using MediaDevices;
 using MTPAutoCopier.MVVM;
+using MTPAutoCopier.Views;
 
 namespace MTPAutoCopier.Models
 {
     public class MtpEngine : NotificationObject
     {
-        private ObservableCollection<MediaDevice> _availableDevices;
-        private ObservableCollection<MtpTask> _tasksForSelectedDevice;
         private MediaDevice _selectedDevice;
         private Settings _config;
         private string _log;
@@ -30,12 +29,6 @@ namespace MTPAutoCopier.Models
             set => SetProperty(ref _config, value);
         }
 
-        public ObservableCollection<MediaDevice> AvailableDevices
-        {
-            get => _availableDevices;
-            set => SetProperty(ref _availableDevices, value);
-        }
-
         public MediaDevice SelectedDevice
         {
             get => _selectedDevice;
@@ -46,17 +39,42 @@ namespace MTPAutoCopier.Models
             }
         }
 
-        public ObservableCollection<MtpTask> TasksForSelectedDevice
-        {
-            get => _tasksForSelectedDevice;
-            set => SetProperty(ref _tasksForSelectedDevice, value);
-        }
+        public ObservableCollection<MediaDevice> AvailableDevices { get; private set; }
+        public ObservableCollection<MtpTask> TasksForSelectedDevice { get; private set; } 
 
         public MtpEngine()
         {
             _dispatcher = Dispatcher.CurrentDispatcher;
             _config = Settings.LoadConfig();
+            TasksForSelectedDevice = new ObservableCollection<MtpTask>();
             AvailableDevices = new ObservableCollection<MediaDevice>(MediaDevice.GetDevices().ToList());
+        }
+
+        public void AddTask()
+        {
+            if (SelectedDevice == null)
+                return;
+
+            var device = new MtpDevice
+            {
+                DeviceName = SelectedDevice.Description,
+                DeviceManufacturer = SelectedDevice.Manufacturer,
+                DeviceId = SelectedDevice.DeviceId
+            };
+
+            var newTask = new MtpTask()
+            {
+                SourceDevice = device
+            };
+
+            var taskEditor = new TaskEditView() {DataContext = newTask};
+            var result = taskEditor.ShowDialog();
+            if (result != null && result == true)
+            {
+                _config.Tasks.Add(newTask);
+                _config.DevicesToWatch.Add(device);
+                _config.SaveConfig();
+            }
         }
 
         private void ShowTasksForSelectedDevice()

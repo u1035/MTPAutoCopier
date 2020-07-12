@@ -4,24 +4,32 @@ using MTPAutoCopier.MVVM;
 
 namespace MTPAutoCopier.ViewModels
 {
-    public class MainVm
+    public class MainVm : NotificationObject
     {
         public MtpEngine Engine { get; set; }
 
         public MediaDevice SelectedDevice
         {
             get => Engine.SelectedDevice;
-            set => Engine.SelectedDevice = value;
+            set
+            {
+                Engine.SelectedDevice = value;
+                RaisePropertyChanged(nameof(IsAddTaskCommandAvailable));
+            }
         }
 
-        public Command ProcessTask { get; }
-        public Command RefreshDevicesList { get; }
+        public bool IsAddTaskCommandAvailable => SelectedDevice != null;
+
+        public Command ProcessTaskCommand { get; }
+        public Command RefreshDevicesListCommand { get; }
+        public Command AddTaskCommand { get; }
 
         public MainVm()
         {
             Engine = new MtpEngine();
-            ProcessTask = new Command(Engine.ProcessTask);
-            RefreshDevicesList = new Command(Engine.RefreshDevicesList);
+            ProcessTaskCommand = new Command(Engine.ProcessTask);
+            RefreshDevicesListCommand = new Command(Engine.RefreshDevicesList);
+            AddTaskCommand = new Command(Engine.AddTask);
         }
 
 

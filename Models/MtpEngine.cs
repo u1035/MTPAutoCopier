@@ -40,7 +40,7 @@ namespace MTPAutoCopier.Models
         }
 
         public ObservableCollection<MediaDevice> AvailableDevices { get; private set; }
-        public ObservableCollection<MtpTask> TasksForSelectedDevice { get; private set; } 
+        public ObservableCollection<MtpTask> TasksForSelectedDevice { get; private set; }
 
         public MtpEngine()
         {
@@ -67,12 +67,15 @@ namespace MTPAutoCopier.Models
                 SourceDevice = device
             };
 
-            var taskEditor = new TaskEditView() {DataContext = newTask};
+            var taskEditor = new TaskEditView() { DataContext = newTask };
             var result = taskEditor.ShowDialog();
             if (result != null && result == true)
             {
                 _config.Tasks.Add(newTask);
-                _config.DevicesToWatch.Add(device);
+
+                if (!_config.DevicesToWatch.Contains(device))
+                    _config.DevicesToWatch.Add(device);
+
                 _config.SaveConfig();
             }
         }
@@ -90,6 +93,8 @@ namespace MTPAutoCopier.Models
             {
                 TasksForSelectedDevice = new ObservableCollection<MtpTask>();
             }
+
+            RaisePropertyChanged(nameof(TasksForSelectedDevice));
         }
 
         public void ProcessTask()
@@ -168,7 +173,7 @@ namespace MTPAutoCopier.Models
                         }
 
                         i++;
-                        _dispatcher.Invoke(() => { Log = $"Processed {i} files. Last processed file - {file.FullName}"; }, DispatcherPriority.DataBind);
+                        AddToLog($"Processed {i} files. Last processed file - {file.FullName}");
                     }
                     device.Disconnect();
                 }
@@ -177,7 +182,7 @@ namespace MTPAutoCopier.Models
             {
 
             }
-            _dispatcher.Invoke(() => { Log = "All task completed"; }, DispatcherPriority.DataBind);
+            AddToLog("All task completed");
         }
 
         private void CopyFile(MediaDevice device, MediaFileInfo file, string destinationDir)
@@ -185,14 +190,21 @@ namespace MTPAutoCopier.Models
             var destinationFile = $"{destinationDir}\\{file.Name}";
             if (!File.Exists(destinationFile))
             {
-                MemoryStream memoryStream = new MemoryStream();
-                device.DownloadFile(file.FullName, memoryStream);
-                memoryStream.Position = 0;
-                WriteStreamToDisk(destinationFile, memoryStream);
+                try
+                {
+                    MemoryStream memoryStream = new MemoryStream();
+                    device.DownloadFile(file.FullName, memoryStream);
+                    memoryStream.Position = 0;
+                    WriteStreamToDisk(destinationFile, memoryStream);
+                }
+                catch (Exception e)
+                {
+                    AddToLog($"Error while copying {file.Name} - {e.Message}");
+                }
             }
             else
             {
-                _dispatcher.Invoke(() => { Log = $"File {file.Name} already exists in destination directory"; }, DispatcherPriority.DataBind);
+                AddToLog($"File {file.Name} already exists in destination directory");
             }
         }
 
@@ -205,6 +217,14 @@ namespace MTPAutoCopier.Models
                 file.Write(bytes, 0, bytes.Length);
                 memoryStream.Close();
             }
+        }
+
+        private void AddToLog(string text)
+        {
+            _dispatcher.Invoke(() =>
+            {
+                Log = $"{text} \n {Log}";
+            });
         }
     }
 }

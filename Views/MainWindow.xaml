@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:mtpAutoCopier="clr-namespace:MTPAutoCopier.ViewModels"
         mc:Ignorable="d"
-        Title="MTPAutoCopier - early alpha" Height="700" Width="800">
+        Title="MTPAutoCopier - early alpha" Height="700" Width="900">
     <Window.DataContext>
         <mtpAutoCopier:MainVm/>
     </Window.DataContext>
